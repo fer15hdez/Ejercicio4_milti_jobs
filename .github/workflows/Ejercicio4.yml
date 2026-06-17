@@ -2,7 +2,7 @@ name: Pipeline Intermedio Multi-Job
 
 on:
   push:
-    branches: [ "stage" ]
+    branches: [ "main" ]
 
 permissions:
   contents: read
