@@ -1,0 +1,58 @@
+name: Pipeline Intermedio Multi-Job
+
+on:
+  push:
+    branches: [ "stage" ]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # ==========================================
+  # JOB 1: VALIDACIÓN (Linter del Dockerfile)
+  # ==========================================
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      # Usamos una acción de la comunidad para validar el Dockerfile
+      - name: Validar sintaxis del Dockerfile (Hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: ./img/Dockerfile
+
+  # ==========================================
+  # JOB 2: CONSTRUCCIÓN Y DISTRIBUCIÓN
+  # ==========================================
+  build-and-push:
+    runs-on: ubuntu-latest
+    # CRUCIAL: Este job no arrancará hasta que 'lint-and-test' termine con éxito
+    needs: [ lint-and-test ]
+    
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      # Notarás que volvemos a configurar Buildx porque esta es una máquina virtual NUEVA
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Iniciar sesión en GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # En un entorno real, aquí usarías tu usuario en minúsculas fijo si tu owner tiene mayúsculas
+      - name: Build and push a GHCR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./img/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/hello-world-multi-job:${{ github.sha }}
