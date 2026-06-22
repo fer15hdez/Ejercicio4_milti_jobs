@@ -64,13 +64,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # En un entorno real, aquí usarías tu usuario en minúsculas fijo si tu owner tiene mayúsculas
+      # LEEMOS EL OUTPUT DEL JOB ANTERIOR: needs.<nombre_job>.outputs.<nombre_output>
+      # ghcr.io/${{ github.repository_owner }}/hello-world-multi-job:${{ github.sha }}
       - name: Build and push a GHCR
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./img/Dockerfile
           push: true
-          tags: |
-            # LEEMOS EL OUTPUT DEL JOB ANTERIOR: needs.<nombre_job>.outputs.<nombre_output>
+          tags: |            
             ghcr.io/${{ github.repository_owner }}/my-hello-world:${{ needs.lint-test-extract.outputs.tag_dinamico }}
-            # ghcr.io/${{ github.repository_owner }}/hello-world-multi-job:${{ github.sha }}
+            
