@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     # AQUÍ DECLARAMOS LAS SALIDAS QUE ESTE JOB VA A OFRECER AL RESTO (Job Outputs)
     outputs:
-      tag_dinamico: "${{ steps: generar-tag.outputs.FECHA_TAG }}"
+      tag_dinamico: "${{ steps.generar-tag.outputs.FECHA_TAG }}"
 
     steps:
       - name: Descargar código
