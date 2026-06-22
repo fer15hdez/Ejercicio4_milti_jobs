@@ -4,7 +4,8 @@ on:
   push:
     branches: [ "main" ]
 
-permissions:
+# CRUCIAL: Le damos permiso al pipeline para escribir paquetes (imágenes) en el repositorio
+permissions: # Permisos para poder subir la imagen al registry de github.  
   contents: read
   packages: write
 
@@ -12,8 +13,12 @@ jobs:
   # ==========================================
   # JOB 1: VALIDACIÓN (Linter del Dockerfile)
   # ==========================================
-  lint-and-test:
+  lint-test-extract:
     runs-on: ubuntu-latest
+    # AQUÍ DECLARAMOS LAS SALIDAS QUE ESTE JOB VA A OFRECER AL RESTO (Job Outputs)
+    outputs:
+      tag_dinamico: ${{ steps: generar-tag.outputs.FECHA_TAG }}
+
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
@@ -23,6 +28,17 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: ./img/Dockerfile
+      
+      # Creamos un paso intermedio para generar el dato dinámico
+      - name: Generar identificador de fecha
+        id: generar-tag # El ID es crucial para poder referenciarlo después
+        run: |
+          # Creamos una fecha en formato AÑO.MES.DIA-HORAMINUTA (ej: 2026.06.22-1530)
+          FECHA=$(date +'%Y.%m.%d-%H%M')
+          echo "La fecha generada es: $FECHA"
+          
+          # Sintaxis especial de GitHub para guardar una salida en el paso actual
+          echo "FECHA_TAG=$FECHA" >> $GITHUB_OUTPUT    
 
   # ==========================================
   # JOB 2: CONSTRUCCIÓN Y DISTRIBUCIÓN
@@ -55,4 +71,6 @@ jobs:
           file: ./img/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/hello-world-multi-job:${{ github.sha }}
+            # LEEMOS EL OUTPUT DEL JOB ANTERIOR: needs.<nombre_job>.outputs.<nombre_output>
+            ghcr.io/${{ github.repository_owner }}/my-hello-world:${{ needs.lint-test-extract.outputs.tag_dinamico }}
+            # ghcr.io/${{ github.repository_owner }}/hello-world-multi-job:${{ github.sha }}
