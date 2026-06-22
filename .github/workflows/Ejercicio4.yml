@@ -46,7 +46,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     # CRUCIAL: Este job no arrancará hasta que 'lint-and-test' termine con éxito
-    needs: [ lint-and-test ]
+    needs: [ lint-test-extract ]
     
     steps:
       - name: Descargar código
